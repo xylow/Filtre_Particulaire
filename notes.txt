@@ -13,3 +13,5 @@ Variance de la mesure
 
 Ellipsoide assez plate --> Diffuser !
 Ellipsoide - esperance et valeurs propres de la matrice de covariance pour les axes
+
+Matheus Felipe Gomes =D
