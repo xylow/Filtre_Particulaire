@@ -141,6 +141,7 @@ legend('estimation','trajectory')
 title("Estimation in the X axis through time")
 xlabel("time [s]")
 ylabel("X")
+norm
 
 figure(5)
 plot(1:N-1,EstX_hist(2,:),'color','r'); hold on;
@@ -152,16 +153,18 @@ ylabel("Y")
 
 %% Section 6 - Average performance tests
 
-M = 1;     % Number of algorithm iterations
+M = 10;     % Number of algorithm iterations
 
 diff_norms = zeros(M,2);     % Difference norm vector
 
 for i=1:M
-    disp("Ongoing iteration: "+i)
     clf(3);
     clf(4);
     clf(5);
 
+    Neff_hist = zeros(1,N-1);
+    EstX_hist = zeros(2,N-1);
+    
     it_loop;
     
     post_treatment;
@@ -171,6 +174,6 @@ for i=1:M
 end
 
 diff_norms
-mean_vec = mean(diff_norms,1);
-disp("Mean of norm-2 X-axis differences = " + mean_vec(1,1))
-disp("Mean of norm-2 Y-axis differences = " + mean_vec(1,2))
+norm_strs = ["Mean of norm-2 X-axis differences = " "Mean of norm-2 Y-axis differences = "];
+
+disp(norm_strs(1,1) + mean(diff_norms,1)(1,1))
