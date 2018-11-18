@@ -3,11 +3,11 @@ EstX_hist = zeros(2,N-1);
 
 % Initialize graphical objects
 if display_it
-    % Level curves plotting
-    figure(1);contour(Z,50);            
+    % Plot 
+    figure(1);contour(Z,50);            % Level curves plotting
     set(gca,'Nextplot','replace');
     % Complete trajectory tracing
-    hx=line(x(:,1),x(:,2),'LineStyle','-','LineWidth',2,'Marker','none','Color','black');
+    hx=line(x(:,1),x(:,2),'LineStyle','-','Marker','none','Color','black');
     % Current position tracing
     hxpos=line(0,0,'LineStyle','none',...
         'Marker','o','MarkerSize',7,'MarkerEdgeColor','black','MarkerFaceColor','black');
@@ -79,4 +79,6 @@ for t=1:N-1
 %     figure(2);
 %     plot(1:numSamples, sort(q));
 %     title("Particle weight in iteration "+t)
+    
+    sum(q);
 end

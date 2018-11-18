@@ -8,12 +8,10 @@
 clear all;
 Z=load('map.asc');
 [I J]=size(Z);                      % Map dimensions
-%figure(1);contour(Z,50);            % Level curves plotting
-%set(gca,'Nextplot','replace');
 
 %% section 2
 % Initialisation des param?tres
-N = 50;                % Number of time steps.
+N = 300;                 % Number of time steps.
 t = 1:1:N;              % Time.
 v0=1;                   % initial speed along x1
 % x = zeros(N,2);         % Hidden states.
@@ -21,11 +19,11 @@ v0=1;                   % initial speed along x1
 x(1,1) = 30;            % Initial state.
 x(1,2) = 170;           % Initial state.
 Rreal = 10^2;           % Measurement noise real variance.
-R=10^2;                 % Measurement noise used for estimation
+R=Rreal;                % Measurement noise used for estimation
 Qreal = [0.1 0;0 10];   % Process noise real variance.
-Q = Qreal;             % Process noise in y variance used for estimation
-initVar = [100 0;0 100];    % Initial variance of the states.
-numSamples=200;         % Number of Particles per time step.
+Q = Qreal;              % Process noise in y variance used for estimation
+initVar = [0 0;0 0];    % Initial variance of the states.
+numSamples=100;             % Number of Particles per time step.
 
 %% Section 3
 % Generation de la trajectoire et des mesures
@@ -44,7 +42,11 @@ for t=1:N
 end
 
 
-%% section 4
+%% Section 4 - Single execution of particle filter
+
+display_it = true;         % Parameter to display/hide iterations in map
+rsmpl_method='uniform';     % Resampling methdod choice
+
 % Particules initiales (prior)
 xxu=zeros(N,2,numSamples);
 xu=sqrt(initVar)*randn(2,numSamples);
@@ -52,125 +54,71 @@ q=ones(1,numSamples);
 xu(1,:)=xu(1,:)+x(1,1);     % Creation of 100 realizations of a gaussian random var following N(x(t=1,1), initVar) --> X dimension
 xu(2,:)=xu(2,:)+x(1,2);     % Creation of 100 realizations of a gaussian random var following N(x(t=1,2), initVar) --> Y dimension
 
-% hx=line(x(:,1),x(:,2),'LineStyle','-','Marker','none','Color','black');%trac? de la trajectoire compl?te
-% hxpos=line(0,0,'LineStyle','none',...
-%     'Marker','o','MarkerSize',7,'MarkerEdgeColor','black','MarkerFaceColor','black');%trac? de la positioncourante
-% hxu=line(0,0,'LineStyle','none','Marker','o');%trac? des particules
-% hxell=line(0,0,'LineStyle','-','Marker','none');%trac? de l'ellipse
 
-
-%% Section 5
 % Update et prediction
 % clf(1);
 % clf(2);
-clf(3);
-clf(4);
-clf(5);
-
-Neff_hist = zeros(1,N-1);
-EstX_hist = zeros(2,N-1);
-
-for t=1:N-1
-    %Predict
-    %from the set of particles xu generate a new set xu
-    xu=xu + [v0 0]' + sqrt(Q)*randn(2,numSamples);      % Random dispersion 
+if ishandle(2), clf(2); end
+if ishandle(3), clf(3); end
+if ishandle(4), clf(4); end
+if ishandle(3), clf(5); end
     
-    %Importance wheights
-    for k=1:numSamples  %k-th particle
-        m(k)=interp2(Z,xu(1,k),xu(2,k));    %mesures predites pour chaque particules
-    end
-    %from the set of weights q compute the new set of weights q
-    q=q.*exp(-1/(2*R)*(m-y(t,1).*ones(size(m))).^2)/sqrt(2*pi*R);
-    [ii jj]=find(xu(1,:)>J | xu(1,:)<1 | xu(2,:)>I | xu(2,:)<1 );
-    q(jj)=0; %Elimine les eventuelles particules "hors du cadre"
-    q=q./sum(q);
-    
-    %Resampling
-    Neff=1/sum(q.^2);
-    Neff_hist(t) = Neff;
-    if Neff<0.75*numSamples %|| isnan(Neff)
-        %Resamplpling
-        method='uniform';
-        switch method
-            case 'none'
-                xur=xu;
-                q=q;
-            case 'uniform'
-                [xur,q] = resample(xu,q);
-            case 'multinomial'
-                
-        end
-                xu=xur;
-    end
-    
-    %Stockage dans xxu
-    xxu(t,:,:)=xu;
-    %mise a jour affichages
-%     pause(0.001);
-%     set(hxu,'Xdata',reshape(xu(1,:),1,numSamples),...
-%         'Ydata',reshape(xu(2,:),1,numSamples));
-%     %     set(hx,'Xdata',x(1:t,1),'Ydata',x(1:t,2));
-%     set(hxpos,'Xdata',x(t,1),'Ydata',x(t,2));
-    %Ellipsoid
-    X0=mean(xu,2);
-    EstX_hist(:,t) = X0;
-    M=(xu-X0*ones(1,length(xu)))*(xu-X0*ones(1,length(xu)))'/length(xu);
-    [U,S,V]=svd(M);
-    a=0:0.1:2*pi;
-    ell0=[sqrt(S(1,1))*cos(a);sqrt(S(2,2))*sin(a)];
-    ell=X0*ones(1,length(a))+V'*ell0;
-    %set(hxell,'Xdata',ell(1,:),'Ydata',ell(2,:),'LineWidth',2,'Color','r'); 
-    
-%     figure(2);
-%     plot(1:numSamples, sort(q));
-%     title("Particle weight in iteration "+t)
-    
-    sum(q);
-end
+% --- Loop execution ---
+it_loop;
+% ----------------------
 
-figure(3)
-plot(1:N-1,Neff_hist)
-title("Effective number of particles through time")
-xlabel("time [s]")
-ylabel("Neff")
+post_treatment;
 
-figure(4)
-plot(1:N-1,EstX_hist(1,:),'color','r'); hold on;
-plot(1:N,x(:,1),'color','b')
-legend('estimation','trajectory')
-title("Estimation in the X axis through time")
-xlabel("time [s]")
-ylabel("X")
+%% Section 5 - Average performance tests
+% This section performs the partoclar filter run several times, and gets
+% the statistics out of them, for finding a mean performance in these runs
+% -------------------------------------------------------------------------
 
-figure(5)
-plot(1:N-1,EstX_hist(2,:),'color','r'); hold on;
-plot(1:N,x(:,2),'color','b')
-legend('estimation','trajectory')
-title("Estimation in the Y axis through time")
-xlabel("time [s]")
-ylabel("Y")
+% --- Settings ---
+display_it = false;         % Parameter to display/hide iterations in map
+rsmpl_method='uniform';     % Resampling methdod choice
+M = 1;                      % Number of algorithm iterations
 
-%% Section 6 - Average performance tests
-
-M = 1;     % Number of algorithm iterations
-
-diff_norms = zeros(M,2);     % Difference norm vector
+% Initialization of memory vectors
+norms = zeros(M,4);         % Norm vector
+n_eff_stat = zeros(M,1);    % Neff vector
 
 for i=1:M
     disp("Ongoing iteration: "+i)
-    clf(3);
-    clf(4);
-    clf(5);
+    
+    % --- Initialization of particles (prior) ---
+    xxu=zeros(N,2,numSamples);
+    xu=sqrt(initVar)*randn(2,numSamples);
+    q=ones(1,numSamples);
+    xu(1,:)=xu(1,:)+x(1,1);     % Creation of 100 realizations of a gaussian random var following N(x(t=1,1), initVar) --> X dimension
+    xu(2,:)=xu(2,:)+x(1,2);     % Creation of 100 realizations of a gaussian random var following N(x(t=1,2), initVar) --> Y dimension
 
+    % --- Loop execution ---
     it_loop;
     
+    % --- Image generation ---
+    for fig=1:5
+    if ishandle(fig), clf(fig); end     % Clears all figures
+    end
     post_treatment;
     
-    diff_norms(i,1) = norm(EstX_hist(1,:)-x(:,1));  % X-axis difference
-    diff_norms(i,2) = norm(EstX_hist(2,:)-x(:,2));  % Y-axis difference
+    % --- Data saving ---
+    x_data = x(:,1);
+    y_data = x(:,2);
+    x_data = x_data(1:end-1)';      % Reshaping trajectory X data
+    y_data = y_data(1:end-1)';      % Reshaping trajectory Y data
+    
+    norms(i,1) = norm(EstX_hist(1,:)-x_data);  % X-axis difference 2-norm
+    norms(i,2) = norm(EstX_hist(1,:)-x_data,'Inf');  % X-axis difference INF-norm
+    norms(i,3) = norm(EstX_hist(2,:)-y_data);  % Y-axis difference 2-norm
+    norms(i,4) = norm(EstX_hist(2,:)-y_data,'Inf');  % Y-axis difference INF-norm
+    n_eff_stat(i,1) = norm(Neff_hist,'Inf');   % Effective particle inf norm
 end
 
-diff_norms
-mean_vec = mean(diff_norms,1);
+norms
+mean_vec = mean(norms,1);
 disp("Mean of norm-2 X-axis differences = " + mean_vec(1,1))
-disp("Mean of norm-2 Y-axis differences = " + mean_vec(1,2))
+disp("Mean of norm-INF X-axis differences = " + mean_vec(1,2))
+disp("Mean of norm-2 Y-axis differences = " + mean_vec(1,3))
+disp("Mean of norm-INF Y-axis differences = " + mean_vec(1,4))
+disp("Mean of maximal effective particle number = " + mean(n_eff_stat(isfinite(n_eff_stat))))
