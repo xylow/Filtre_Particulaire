@@ -73,10 +73,9 @@ for t=1:N-1
         set(hxpos,'Xdata',x(t,1),'Ydata',x(t,2));
         % Ellipse
         set(hxell,'Xdata',ell(1,:),'Ydata',ell(2,:),'LineWidth',2,'Color','r');
+%         figure(2);
+%         plot(1:numSamples, sort(q));
+%         histogram(sort(q))
+%         title("Particle weight in iteration "+t)
     end
-     
-    
-%     figure(2);
-%     plot(1:numSamples, sort(q));
-%     title("Particle weight in iteration "+t)
 end

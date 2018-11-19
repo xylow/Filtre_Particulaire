@@ -16,14 +16,14 @@ t = 1:1:N;              % Time.
 v0=1;                   % initial speed along x1
 % x = zeros(N,2);         % Hidden states.
 % y = zeros(N,1);         % Observations.
-x(1,1) = 30;            % Initial state.
-x(1,2) = 170;           % Initial state.
+x(1,1) = 110;            % Initial state.
+x(1,2) = 350;           % Initial state.
 Rreal = 10^2;           % Measurement noise real variance.
-R=Rreal;                % Measurement noise used for estimation
+R=5*Rreal;                % Measurement noise used for estimation
 Qreal = [0.1 0;0 10];   % Process noise real variance.
-Q = Qreal;              % Process noise in y variance used for estimation
-initVar = [0 0;0 0];    % Initial variance of the states.
-numSamples=100;             % Number of Particles per time step.
+Q = 2*Qreal;              % Process noise in y variance used for estimation
+initVar = [100 0;0 100];    % Initial variance of the states.
+numSamples=200;             % Number of Particles per time step.
 
 %% Section 3
 % Generation de la trajectoire et des mesures
@@ -75,7 +75,7 @@ post_treatment;
 % -------------------------------------------------------------------------
 
 % --- Settings ---
-display_it = false;         % Parameter to display/hide iterations in map
+display_it = true;         % Parameter to display/hide iterations in map
 rsmpl_method='uniform';     % Resampling methdod choice
 M = 1;                      % Number of algorithm iterations
 
